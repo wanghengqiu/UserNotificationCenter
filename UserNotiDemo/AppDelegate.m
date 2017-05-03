@@ -6,9 +6,30 @@
 //  Copyright © 2017年 王恒求. All rights reserved.
 //
 
-#import "AppDelegate.h"
+/** 远程通知范本，在ios10中如果需要使用UNUserNotification，需要将mutable-content置为1*/
+//{
+//    "aps":
+//    {
+//        "alert":
+//        {
+//            "title":"hello",
+//            "subtitle" : "Session 01",
+//            "body":"it is a beautiful day"
+//        },
+//        "category":"myNotificationCategory",
+//        "badge":1,
+//        "mutable-content":1,
+//        "sound":"default",
+//        "image":"https://picjumbo.imgix.net/HNCK8461.jpg?q=40&w=200&sharp=30"
+//    }
+//}
 
-@interface AppDelegate ()
+#import "AppDelegate.h"
+#import "ViewController.h"
+#import "LXFrameUtil.h"
+#import <UserNotifications/UserNotifications.h>
+
+@interface AppDelegate () <UNUserNotificationCenterDelegate>
 
 @end
 
@@ -16,36 +37,153 @@
 
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-    // Override point for customization after application launch.
+    self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
+    self.window.backgroundColor = [UIColor whiteColor];
+    
+    ViewController* vc = [[ViewController alloc]init];
+    UINavigationController * nav = [[UINavigationController alloc]initWithRootViewController:vc];
+    UINavigationBar *bar = [UINavigationBar appearance];
+    [bar setTintColor:[UIColor whiteColor]];
+    [bar setBackgroundImage:[LXFrameUtil imageofColor:HEX2RGB(@"db3f34")] forBarMetrics:UIBarMetricsDefault];
+    NSMutableDictionary *dicBar = [NSMutableDictionary dictionary];
+    dicBar[NSForegroundColorAttributeName] = [UIColor whiteColor];
+    dicBar[NSFontAttributeName] = [UIFont systemFontOfSize:18];
+    [bar setTitleTextAttributes:dicBar];
+    
+    self.window.rootViewController = nav;
+    
+    [self.window makeKeyAndVisible];
+    
+    [self registApns];
+    
+    NSUserDefaults *shared = [[NSUserDefaults alloc] initWithSuiteName:@"group.com.lingshengdaquan"];
+    [shared setObject:@"这是来自主程序的数据" forKey:@"test"];
+    [shared synchronize];
+    
     return YES;
 }
 
+-(void)registApns
+{
+    CGFloat currentSystemVersion = [[[UIDevice currentDevice] systemVersion]floatValue];
+    
+    [[UIApplication sharedApplication]registerForRemoteNotifications];
+    
+    if (currentSystemVersion >= 10.0) {
+        [[UNUserNotificationCenter currentNotificationCenter]setDelegate:self];
+        UNUserNotificationCenter *center = [UNUserNotificationCenter currentNotificationCenter];
+        [center requestAuthorizationWithOptions:UNAuthorizationOptionAlert | UNAuthorizationOptionBadge | UNAuthorizationOptionSound completionHandler:^(BOOL granted, NSError * _Nullable error) {
+            if (granted) {
+                NSLog(@"Notification center Open success");
+            } else {
+                NSLog(@"Notification center Open failed");
+            }
+        }];
+    } else {
+        [[UIApplication sharedApplication] registerUserNotificationSettings:[UIUserNotificationSettings settingsForTypes:(UIUserNotificationTypeAlert | UIUserNotificationTypeBadge | UIUserNotificationTypeSound ) categories:nil]];
+    }
+//    else {
+//        [[UIApplication sharedApplication] registerForRemoteNotificationTypes:(UIRemoteNotificationTypeBadge |
+//                                                         UIRemoteNotificationTypeAlert |
+//                                                         UIRemoteNotificationTypeSound)];
+//    }
+}
+
+// iOS 10收到通知
+- (void)userNotificationCenter:(UNUserNotificationCenter *)center willPresentNotification:(UNNotification *)notification withCompletionHandler:(void (^)(UNNotificationPresentationOptions options))completionHandler{
+/** 只有在客户端启动的时候才会调用*/
+    completionHandler(UNNotificationPresentationOptionAlert); // 需要执行这个方法，选择是否提醒用户，有Badge、Sound、Alert三种类型可以设置
+}
+
+//  iOS10特性。点击通知进入App
+/** 如果通知界面不是自定义的，那么action的响应是这里处理，如果用到了自定义的通知界面，那么是在对应的自定义界面的controller中的didReceiveNotificationResponse处理*/
+- (void)userNotificationCenter:(UNUserNotificationCenter *)center didReceiveNotificationResponse:(UNNotificationResponse *)response withCompletionHandler:(void(^)())completionHandler {
+    
+    //  UNNotificationResponse 是普通按钮的Response
+    NSString* actionIdentifierStr = response.actionIdentifier;
+    if (actionIdentifierStr) {
+
+        if ([actionIdentifierStr isEqualToString:@"IdentifierJoinAppA"]) {
+            //  do anything
+        } else if ([actionIdentifierStr isEqualToString:@"IdentifierJoinAppB"]) {
+            [[UIApplication sharedApplication] setApplicationIconBadgeNumber:0];
+        }
+    }
+    
+    //  UNTextInputNotificationResponse 是带文本输入框按钮的Response
+    if ([response isKindOfClass:[UNTextInputNotificationResponse class]]) {
+        NSString* userSayStr = [(UNTextInputNotificationResponse *)response userText];
+        if (userSayStr) {
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                
+            });
+        }
+    }
+    
+    completionHandler();
+}
+
+- (void)application:(UIApplication *)app didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken {
+
+    NSString *token = [NSString stringWithFormat:@"%@", deviceToken];
+    NSMutableString *mutableToken = [NSMutableString stringWithString:token];
+    if ([mutableToken hasPrefix:@"<"]) {
+        [mutableToken deleteCharactersInRange:NSMakeRange(0, 1)];
+    }
+    if ([mutableToken hasSuffix:@">"]) {
+        [mutableToken deleteCharactersInRange:NSMakeRange(mutableToken.length - 1, 1)];
+    }
+    NSLog(@"My token is:%@", mutableToken);
+
+}
+
+- (void)application:(UIApplication *)app didFailToRegisterForRemoteNotificationsWithError:(NSError *)error {
+    NSString *error_str = [NSString stringWithFormat: @"%@", error];
+    NSLog(@"Failed to get token, error:%@", error_str);
+}
+
+// 接送push推送
+- (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo
+{
+    NSLog(@"Receive remote notification : %@",userInfo);
+}
+
+// 接送本地推送
+- (void)application:(UIApplication *)application didReceiveLocalNotification:(UILocalNotification *)notification
+{
+
+    NSDictionary *userinfo = [notification userInfo];
+    NSLog(@"applcation didReceiveLocalNotification : %@",userinfo);
+
+}
+
+
+- (BOOL)application:(UIApplication *)application openURL:(NSURL *)url sourceApplication:(NSString *)sourceApplication annotation:(id)annotation
+{
+    return YES;
+}
 
 - (void)applicationWillResignActive:(UIApplication *)application {
-    // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
-    // Use this method to pause ongoing tasks, disable timers, and invalidate graphics rendering callbacks. Games should use this method to pause the game.
+
 }
 
 
 - (void)applicationDidEnterBackground:(UIApplication *)application {
-    // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
-    // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
+
 }
 
 
 - (void)applicationWillEnterForeground:(UIApplication *)application {
-    // Called as part of the transition from the background to the active state; here you can undo many of the changes made on entering the background.
+
 }
 
 
 - (void)applicationDidBecomeActive:(UIApplication *)application {
-    // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
+
 }
 
 
 - (void)applicationWillTerminate:(UIApplication *)application {
-    // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
-    // Saves changes in the application's managed object context before the application terminates.
     [self saveContext];
 }
 
@@ -61,17 +199,7 @@
             _persistentContainer = [[NSPersistentContainer alloc] initWithName:@"UserNotiDemo"];
             [_persistentContainer loadPersistentStoresWithCompletionHandler:^(NSPersistentStoreDescription *storeDescription, NSError *error) {
                 if (error != nil) {
-                    // Replace this implementation with code to handle the error appropriately.
-                    // abort() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-                    
-                    /*
-                     Typical reasons for an error here include:
-                     * The parent directory does not exist, cannot be created, or disallows writing.
-                     * The persistent store is not accessible, due to permissions or data protection when the device is locked.
-                     * The device is out of space.
-                     * The store could not be migrated to the current model version.
-                     Check the error message to determine what the actual problem was.
-                    */
+
                     NSLog(@"Unresolved error %@, %@", error, error.userInfo);
                     abort();
                 }
@@ -88,8 +216,7 @@
     NSManagedObjectContext *context = self.persistentContainer.viewContext;
     NSError *error = nil;
     if ([context hasChanges] && ![context save:&error]) {
-        // Replace this implementation with code to handle the error appropriately.
-        // abort() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
+
         NSLog(@"Unresolved error %@, %@", error, error.userInfo);
         abort();
     }

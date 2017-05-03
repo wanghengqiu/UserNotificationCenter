@@ -4,10 +4,30 @@
 <dict>
 	<key>SchemeUserState</key>
 	<dict>
+		<key>NotificationExtern.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>1</integer>
+		</dict>
+		<key>NotificationServer.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>2</integer>
+		</dict>
+		<key>NotificationWithInput.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>3</integer>
+		</dict>
 		<key>UserNotiDemo.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
 			<integer>0</integer>
+		</dict>
+		<key>Widget.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>4</integer>
 		</dict>
 	</dict>
 	<key>SuppressBuildableAutocreation</key>
@@ -23,6 +43,56 @@
 			<true/>
 		</dict>
 		<key>815E5A021E9B24C4008BB0C3</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>815E5A251E9B7DEC008BB0C3</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>815E5A7F1E9DFF76008BB0C3</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>815E5A941E9E05C7008BB0C3</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>815E5AAC1E9E172D008BB0C3</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>8180126F1EB5A7F000A26A61</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>81B2AE931E9F15EF000660C9</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>81B2AEA81E9F2212000660C9</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>81B2AEB81E9F77FD000660C9</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>81BF75FB1EA4A4C2001482C0</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>81BF76101EA4B04B001482C0</key>
 		<dict>
 			<key>primary</key>
 			<true/>
